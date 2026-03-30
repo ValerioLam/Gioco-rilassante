@@ -28,7 +28,7 @@
 
         // Caricamento immagine faccia
         const faceImg = new Image();
-        faceImg.src = 'faccia.png'; 
+        faceImg.src = 'faccia.png'; // Carica il file anche se ha lo sfondo bianco
 
         let gameSpeed = 4;
         const gravity = 0.6;
@@ -36,11 +36,33 @@
 
         const girl = {
             x: 50, y: canvas.height - 120,
-            w: 70, h: 70, dy: 0,
-            jumpForce: -13, grounded: false,
+            w: 80, h: 80, // Leggermente più grande per il cerchio
+            dy: 0,
+            jumpForce: -14, grounded: false,
             draw() {
                 if (faceImg.complete) {
+                    ctx.save(); // Salva lo stato attuale del canvas
+
+                    // --- CREAZIONE DELLA MASCHERA CIRCOLARE ---
+                    ctx.beginPath();
+                    // Definisce un cerchio al centro della posizione della bambina
+                    ctx.arc(this.x + this.w / 2, this.y + this.h / 2, this.w / 2, 0, Math.PI * 2, true);
+                    ctx.closePath();
+                    
+                    ctx.clip(); // Dice al canvas di disegnare SOLO dentro il cerchio appena definito
+
+                    // Disegna l'immagine quadrata: verrà "ritagliata" dal cerchio
                     ctx.drawImage(faceImg, this.x, this.y, this.w, this.h);
+
+                    ctx.restore(); // Ripristina il canvas per disegnare il resto normalmente
+
+                    // Opzionale: aggiunge un bordino bianco attorno al cerchio per estetica
+                    ctx.strokeStyle = "white";
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.w / 2, this.y + this.h / 2, this.w / 2, 0, Math.PI * 2, true);
+                    ctx.stroke();
+
                 } else {
                     ctx.font = '50px serif'; ctx.fillText('👧', this.x, this.y + 50);
                 }
@@ -77,7 +99,8 @@
                 ctx.font = '40px serif';
                 ctx.fillText('📚', o.x, o.y);
 
-                if (girl.x < o.x + 30 && girl.x + 50 > o.x && girl.y + 50 > o.y - 30) {
+                // Collisione semplificata (quadrata)
+                if (girl.x < o.x + 30 && girl.x + 60 > o.x && girl.y + 70 > o.y - 30) {
                     playLoseSound();
                     obstacles.length = 0;
                 }
