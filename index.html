@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Il Salto Rilassante</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FFDEE9">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(0deg, #fbc2eb 0%, #a6c1ee 100%);
+            touch-action: manipulation;
+        }
+        canvas {
+            display: block;
+        }
+        #ui {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">Tocca per saltare</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let score = 0;
+        let gameSpeed = 3;
+        const gravity = 0.6;
+        
+        const girl = {
+            x: 50,
+            y: canvas.height - 100,
+            width: 50,
+            height: 50,
+            dy: 0,
+            jumpForce: -12,
+            grounded: false,
+            draw() {
+                ctx.font = '50px serif';
+                ctx.fillText('👧', this.x, this.y);
+            }
+        };
+
+        const obstacles = [];
+        function spawnObstacle() {
+            const size = 40;
+            obstacles.push({
+                x: canvas.width,
+                y: canvas.height - 50,
+                width: size,
+                height: size,
+                color: '#fff'
+            });
+        }
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Gravità e movimento
+            girl.dy += gravity;
+            girl.y += girl.dy;
+
+            if (girl.y + girl.height > canvas.height - 20) {
+                girl.y = canvas.height - 20 - girl.height;
+                girl.dy = 0;
+                girl.grounded = true;
+            }
+
+            girl.draw();
+
+            // Gestione ostacoli (fiori/nuvole)
+            if (Date.now() % 150 === 0) spawnObstacle(); 
+
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let o = obstacles[i];
+                o.x -= gameSpeed;
+
+                // Disegna fiorellino come ostacolo
+                ctx.font = '30px serif';
+                ctx.fillText('🌸', o.x, o.y);
+
+                // Collisione semplificata
+                if (girl.x < o.x + 30 && girl.x + 30 > o.x && girl.y < o.y && girl.y + 30 > o.y - 30) {
+                    score = 0; // Reset dolce
+                    obstacles.length = 0;
+                }
+
+                if (o.x + o.width < 0) {
+                    obstacles.splice(i, 1);
+                    score++;
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        window.addEventListener('touchstart', () => {
+            if (girl.grounded) {
+                girl.dy = girl.jumpForce;
+                girl.grounded = false;
+            }
+        });
+
+        window.addEventListener('mousedown', () => {
+            if (girl.grounded) {
+                girl.dy = girl.jumpForce;
+                girl.grounded = false;
+            }
+        });
+
+        update();
+        setInterval(spawnObstacle, 2000);
+
+        // Registrazione Service Worker per PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>

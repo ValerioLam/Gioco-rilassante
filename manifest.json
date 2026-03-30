@@ -1,0 +1,15 @@
+{
+  "name": "Salto Relax",
+  "short_name": "Salto",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#FFDEE9",
+  "theme_color": "#FFDEE9",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3048/3048122.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
