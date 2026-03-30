@@ -1,10 +1,10 @@
 {
-  "name": "Salto Relax",
-  "short_name": "Salto",
+  "name": "Il Salto dei Libri",
+  "short_name": "Libri",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#FFDEE9",
-  "theme_color": "#FFDEE9",
+  "background_color": "#a6c1ee",
+  "theme_color": "#a6c1ee",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3048/3048122.png",

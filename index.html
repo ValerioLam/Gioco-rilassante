@@ -3,135 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Il Salto Rilassante</title>
+    <title>Il Salto dei Libri</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#FFDEE9">
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(0deg, #fbc2eb 0%, #a6c1ee 100%);
-            touch-action: manipulation;
-        }
-        canvas {
-            display: block;
-        }
-        #ui {
-            position: absolute;
-            top: 20px;
-            width: 100%;
-            text-align: center;
-            color: white;
-            font-size: 24px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-            pointer-events: none;
-        }
+        body { margin: 0; overflow: hidden; background: linear-gradient(0deg, #fbc2eb 0%, #a6c1ee 100%); touch-action: manipulation; }
+        canvas { display: block; }
+        #ui { position: absolute; top: 20px; width: 100%; text-align: center; color: white; font-family: sans-serif; pointer-events: none; }
     </style>
 </head>
 <body>
-    <div id="ui">Tocca per saltare</div>
+    <div id="ui">Tocca per saltare i libri!</div>
     <canvas id="gameCanvas"></canvas>
+    
+    <audio id="bgMusic" src="musica.mp3" loop></audio>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-
+        const bgMusic = document.getElementById('bgMusic');
+        
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        let score = 0;
-        let gameSpeed = 3;
+        // Caricamento immagine faccia
+        const faceImg = new Image();
+        faceImg.src = 'faccia.png'; 
+
+        let gameSpeed = 4;
         const gravity = 0.6;
-        
+        let isPlaying = false;
+
         const girl = {
-            x: 50,
-            y: canvas.height - 100,
-            width: 50,
-            height: 50,
-            dy: 0,
-            jumpForce: -12,
-            grounded: false,
+            x: 50, y: canvas.height - 120,
+            w: 70, h: 70, dy: 0,
+            jumpForce: -13, grounded: false,
             draw() {
-                ctx.font = '50px serif';
-                ctx.fillText('👧', this.x, this.y);
+                if (faceImg.complete) {
+                    ctx.drawImage(faceImg, this.x, this.y, this.w, this.h);
+                } else {
+                    ctx.font = '50px serif'; ctx.fillText('👧', this.x, this.y + 50);
+                }
             }
         };
 
         const obstacles = [];
-        function spawnObstacle() {
-            const size = 40;
-            obstacles.push({
-                x: canvas.width,
-                y: canvas.height - 50,
-                width: size,
-                height: size,
-                color: '#fff'
-            });
+        function playLoseSound() {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.5);
+            gain.gain.fadeOutAtTime = 0.5;
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
         }
 
         function update() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Gravità e movimento
             girl.dy += gravity;
             girl.y += girl.dy;
 
-            if (girl.y + girl.height > canvas.height - 20) {
-                girl.y = canvas.height - 20 - girl.height;
-                girl.dy = 0;
-                girl.grounded = true;
+            if (girl.y + girl.h > canvas.height - 30) {
+                girl.y = canvas.height - 30 - girl.h;
+                girl.dy = 0; girl.grounded = true;
             }
-
             girl.draw();
-
-            // Gestione ostacoli (fiori/nuvole)
-            if (Date.now() % 150 === 0) spawnObstacle(); 
 
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 let o = obstacles[i];
                 o.x -= gameSpeed;
+                ctx.font = '40px serif';
+                ctx.fillText('📚', o.x, o.y);
 
-                // Disegna fiorellino come ostacolo
-                ctx.font = '30px serif';
-                ctx.fillText('🌸', o.x, o.y);
-
-                // Collisione semplificata
-                if (girl.x < o.x + 30 && girl.x + 30 > o.x && girl.y < o.y && girl.y + 30 > o.y - 30) {
-                    score = 0; // Reset dolce
+                if (girl.x < o.x + 30 && girl.x + 50 > o.x && girl.y + 50 > o.y - 30) {
+                    playLoseSound();
                     obstacles.length = 0;
                 }
-
-                if (o.x + o.width < 0) {
-                    obstacles.splice(i, 1);
-                    score++;
-                }
+                if (o.x < -50) obstacles.splice(i, 1);
             }
-
             requestAnimationFrame(update);
         }
 
-        window.addEventListener('touchstart', () => {
+        function start() {
+            if(!isPlaying) {
+                bgMusic.play();
+                isPlaying = true;
+            }
             if (girl.grounded) {
                 girl.dy = girl.jumpForce;
                 girl.grounded = false;
             }
-        });
+        }
 
-        window.addEventListener('mousedown', () => {
-            if (girl.grounded) {
-                girl.dy = girl.jumpForce;
-                girl.grounded = false;
-            }
-        });
+        window.addEventListener('touchstart', start);
+        window.addEventListener('mousedown', start);
+
+        setInterval(() => {
+            obstacles.push({ x: canvas.width, y: canvas.height - 40 });
+        }, 1800);
 
         update();
-        setInterval(spawnObstacle, 2000);
-
-        // Registrazione Service Worker per PWA
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
     </script>
 </body>
 </html>
